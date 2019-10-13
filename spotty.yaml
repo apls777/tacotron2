@@ -1,0 +1,55 @@
+project:
+  name: tacotron2
+  syncFilters:
+    - exclude:
+        - .git/*
+        - .idea/*
+        - '*/__pycache__/*'
+        - models/*
+
+container:
+  projectDir: /workspace/project
+  file: docker/Dockerfile.spotty
+  ports: [6006, 6007, 8888]
+  volumeMounts:
+    - name: workspace
+      mountPath: /workspace
+
+instances:
+  - name: i1
+    provider: gcp
+    parameters:
+      zone: asia-east1-b
+      machineType: n1-standard-8
+      onDemandInstance: true
+      dockerDataRoot: /docker
+      gpu:
+        type: nvidia-tesla-k80
+      volumes:
+        - name: workspace
+          parameters:
+            size: 10
+            deletionPolicy: retain
+        - name: docker
+          parameters:
+            size: 10
+            mountDir: /docker
+            deletionPolicy: retain
+
+scripts:
+  jupyter: |
+    jupyter notebook --allow-root --ip 0.0.0.0 --no-browser
+  download-checkpoints: |
+    mkdir -p models
+    cd models
+    pip install gdown
+    # tagotron2
+    gdown https://drive.google.com/uc?id=1c5ZTuT7J08wLUoVZ2KkUs_VdZuJ86ZqA
+    # waveglow
+    gdown https://drive.google.com/uc?id=1WsibBTsuRg_SF2Z6L6NFRTT-NjEy1oTx
+  convert-model: |
+    python waveglow/convert_model.py \
+      models/waveglow_256channels.pt \
+      models/waveglow_256channels_converted.pt
+  create-audiobook: |
+    PYTHONPATH=. python scripts/create_audiobook.py

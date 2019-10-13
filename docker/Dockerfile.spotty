@@ -1,0 +1,12 @@
+FROM pytorch/pytorch:nightly-devel-cuda10.0-cudnn7
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+
+RUN apt-get update -y
+RUN pip install numpy scipy matplotlib librosa==0.6.0 tensorflow==1.14.0 tensorboardX inflect==0.2.5 Unidecode==1.0.22 jupyter
+
+# clone waveglow
+RUN git clone https://github.com/NVIDIA/waveglow.git /workspace/waveglow
+
+# clone and install apex
+RUN git clone https://github.com/NVIDIA/apex.git /workspace/apex
+RUN pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" /workspace/apex
